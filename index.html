@@ -7,9 +7,9 @@
 
 	<script>
 		function simulate() {
-			var primogems = document.getElementById("primogems").value;
-			var fates =  document.getElementById("fates").value;
-			var pityCounter =  document.getElementById("pity").value;
+			var primogems = parseInt(document.getElementById("primogems").value);
+			var fates = parseInt(document.getElementById("fates").value);
+			var pityCounter = parseInt(document.getElementById("pity").value);
 			if (isNaN(primogems) || isNaN(fates) || isNaN(pityCounter)) {
 				alert("Invalid inputs");
 				return;
