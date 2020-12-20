@@ -21,25 +21,26 @@
 
 			var rateUps = 0;
 			var others = 0;
-			var constellation = [0, 0, 0, 0, 0, 0, 0];
+			var c = [0, 0, 0, 0, 0, 0, 0];
 			for (var i = 0; i < simulations; i++) {
 				var roll = simulateOne(rolls, pityCounter, guaranteedRateUp);
 				rateUps += roll.rateUps;
 				others += roll.others;
 				if (roll.rateUps > 0) {
-					constellation[Math.min(roll.rateUps - 1, 6)] += 1;
+					c[Math.min(roll.rateUps - 1, 6)] += 1;
 				}
 			}
 
 			document.getElementById("total").innerHTML = (rateUps + others) / simulations;
 			document.getElementById("rateUp").innerHTML = rateUps / simulations;
-			document.getElementById("c0").innerHTML = (constellation[0] / simulations * 100).toFixed(3) + "%";
-			document.getElementById("c1").innerHTML = (constellation[1] / simulations * 100).toFixed(3) + "%";
-			document.getElementById("c2").innerHTML = (constellation[2] / simulations * 100).toFixed(3) + "%";
-			document.getElementById("c3").innerHTML = (constellation[3] / simulations * 100).toFixed(3) + "%";
-			document.getElementById("c4").innerHTML = (constellation[4] / simulations * 100).toFixed(3) + "%";
-			document.getElementById("c5").innerHTML = (constellation[5] / simulations * 100).toFixed(3) + "%";
-			document.getElementById("c6").innerHTML = (constellation[6] / simulations * 100).toFixed(3) + "%";
+
+			document.getElementById("c0").innerHTML = ((c[0] + c[1] + c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(3) + "%";
+			document.getElementById("c1").innerHTML = ((c[1] + c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(3) + "%";
+			document.getElementById("c2").innerHTML = ((c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(3) + "%";
+			document.getElementById("c3").innerHTML = ((c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(3) + "%";
+			document.getElementById("c4").innerHTML = ((c[4] + c[5] + c[6]) / simulations * 100).toFixed(3) + "%";
+			document.getElementById("c5").innerHTML = ((c[5] + c[6])/ simulations * 100).toFixed(3) + "%";
+			document.getElementById("c6").innerHTML = (c[6] / simulations * 100).toFixed(3) + "%";
 		}
 
 		function simulateOne(rolls, pityCounter, guaranteedRateUp) {
@@ -114,6 +115,7 @@
 			<tr>
 				<th scope="row">Chance of getting C3</th>
 				<td id="c3"></td>
+				<td id="c3c"></td>
 			</tr>
 			<tr>
 				<th scope="row">Chance of getting C4</th>
