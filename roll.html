@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Genshin Impact Roll Simulator</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+
+	<script>
+		function simulate() {
+			var primogems = document.getElementById("primogems").value;
+			var fates =  document.getElementById("fates").value;
+			var pityCounter =  document.getElementById("pity").value;
+			if (isNaN(primogems) || isNaN(fates) || isNaN(pityCounter)) {
+				alert("Invalid inputs");
+				return;
+			}
+			
+			var guaranteedRateUp = document.getElementById("guaranteed").checked
+			var rolls = primogems / 160 + fates;
+			var simulations = 100000;
+
+			var rateUps = 0;
+			var others = 0;
+			var constellation = [0, 0, 0, 0, 0, 0, 0];
+			for (var i = 0; i < simulations; i++) {
+				var roll = simulateOne(rolls, pityCounter, guaranteedRateUp);
+				rateUps += roll.rateUps;
+				others += roll.others;
+				if (roll.rateUps > 0) {
+					constellation[Math.min(roll.rateUps - 1, 6)] += 1;
+				}
+			}
+
+			document.getElementById("total").innerHTML = (rateUps + others) / simulations;
+			document.getElementById("rateUp").innerHTML = rateUps / simulations;
+			document.getElementById("c0").innerHTML = (constellation[0] / simulations * 100).toFixed(3) + "%";
+			document.getElementById("c1").innerHTML = (constellation[1] / simulations * 100).toFixed(3) + "%";
+			document.getElementById("c2").innerHTML = (constellation[2] / simulations * 100).toFixed(3) + "%";
+			document.getElementById("c3").innerHTML = (constellation[3] / simulations * 100).toFixed(3) + "%";
+			document.getElementById("c4").innerHTML = (constellation[4] / simulations * 100).toFixed(3) + "%";
+			document.getElementById("c5").innerHTML = (constellation[5] / simulations * 100).toFixed(3) + "%";
+			document.getElementById("c6").innerHTML = (constellation[6] / simulations * 100).toFixed(3) + "%";
+		}
+
+		function simulateOne(rolls, pityCounter, guaranteedRateUp) {
+			var rateUps = 0;
+			var others = 0;
+			for (var i = 0; i < rolls; i++) {
+				pityCounter++;
+				var chance = pityCounter < 76 ? 0.006 : 0.324;
+				if (Math.random() < chance || pityCounter > 89) {
+					pityCounter = 0;
+					if (guaranteedRateUp || Math.random() < 0.5) {
+						rateUps++;
+						guaranteedRateUp = false;
+					} else {
+						others++;
+						guaranteedRateUp = true;
+					}
+				}
+			}
+			return {
+				rateUps: rateUps,
+				others: others
+			};
+		}
+	</script>
+</head>
+
+<body class="bg-light">
+<div class="container">
+	<div class="col-md-4">
+		<label for="primogems" class="form-label mt-4">Amount of primogems</label>
+		<input type="text" class="form-control w-25" id="primogems" value="0">
+		<label for="fates" class="form-label mt-4">Amount of fates</label>
+		<input type="text" class="form-control w-25" id="fates" value="0">
+		<label for="pity" class="form-label mt-4">Pity counter (how many rolls did you make since your last 5*)</label>
+		<input type="text" class="form-control w-25" id="pity" value="0">
+		<div class="form-check mt-4">
+			<input type="checkbox" class="form-check-input" id="guaranteed">
+			<label class="form-check-label" for="guaranteed">My next 5* is guaranteed to be a rate up characater</label>
+		</div>
+		<button type="button" class="btn btn-primary mt-4" onclick="simulate()">Simulate</button>
+	</div>
+	<div class="col-md-6 mt-4">
+		<table class="table">
+			<thead>
+			<tr>
+				<th scope="col">Result</th>
+				<th scope="col">Value</th>
+			</tr>
+			</thead>
+			<tbody>
+			<tr>
+				<th scope="row">Average number of 5* characters</th>
+				<td id="total"></td>
+			</tr>
+			<tr>
+				<th scope="row">Average number of rate up 5* characters</th>
+				<td id="rateUp"></td>
+			</tr>
+			<tr>
+				<th scope="row">Chance of getting C0</th>
+				<td id="c0"></td>
+			</tr>
+			<tr>
+				<th scope="row">Chance of getting C1</th>
+				<td id="c1"></td>
+			</tr>
+			<tr>
+				<th scope="row">Chance of getting C2</th>
+				<td id="c2"></td>
+			</tr>
+			<tr>
+				<th scope="row">Chance of getting C3</th>
+				<td id="c3"></td>
+			</tr>
+			<tr>
+				<th scope="row">Chance of getting C4</th>
+				<td id="c4"></td>
+			</tr>
+			<tr>
+				<th scope="row">Chance of getting C5</th>
+				<td id="c5"></td>
+			</tr>
+			<tr>
+				<th scope="row">Chance of getting C6</th>
+				<td id="c6"></td>
+			</tr>
+			</tbody>
+		</table>
+	</div>
+</div>
+</body>
+</html>
