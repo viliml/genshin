@@ -5,43 +5,30 @@
 	<title>Genshin Impact Roll Simulator</title>
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
 
-	<script>
-		function simulate() {
-			var primogems = parseInt(document.getElementById("primogems").value);
-			var fates = parseInt(document.getElementById("fates").value);
-			var pityCounter = parseInt(document.getElementById("pity").value);
-			if (isNaN(primogems) || isNaN(fates) || isNaN(pityCounter)) {
-				alert("Invalid inputs");
-				return;
-			}
-			
-			var guaranteedRateUp = document.getElementById("guaranteed").checked
-			var rolls = primogems / 160 + fates;
-			var simulations = 100000;
-
+	<script id="worker" type="javascript/worker">
+		self.onmessage = function(e) {
 			var rateUps = 0;
 			var others = 0;
 			var c = [0, 0, 0, 0, 0, 0, 0];
-			for (var i = 0; i < simulations; i++) {
-				var roll = simulateOne(rolls, pityCounter, guaranteedRateUp);
+			for (var i = 0; i < e.data.simulations; i++) {
+				var roll = simulateOne(e.data.rolls, e.data.pityCounter, e.data.guaranteedRateUp);
 				rateUps += roll.rateUps;
 				others += roll.others;
 				if (roll.rateUps > 0) {
 					c[Math.min(roll.rateUps - 1, 6)] += 1;
 				}
+				if (i % (e.data.simulations / 100) == 0) {
+					postMessage({
+						progress: i
+					});
+				}
 			}
-
-			document.getElementById("total").innerHTML = (rateUps + others) / simulations;
-			document.getElementById("rateUp").innerHTML = rateUps / simulations;
-
-			document.getElementById("c0").innerHTML = ((c[0] + c[1] + c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(3) + "%";
-			document.getElementById("c1").innerHTML = ((c[1] + c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(3) + "%";
-			document.getElementById("c2").innerHTML = ((c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(3) + "%";
-			document.getElementById("c3").innerHTML = ((c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(3) + "%";
-			document.getElementById("c4").innerHTML = ((c[4] + c[5] + c[6]) / simulations * 100).toFixed(3) + "%";
-			document.getElementById("c5").innerHTML = ((c[5] + c[6])/ simulations * 100).toFixed(3) + "%";
-			document.getElementById("c6").innerHTML = (c[6] / simulations * 100).toFixed(3) + "%";
-		}
+			postMessage({
+				rateUps: rateUps,
+				others: others,
+				c: c
+			});
+		};
 
 		function simulateOne(rolls, pityCounter, guaranteedRateUp) {
 			var rateUps = 0;
@@ -66,6 +53,61 @@
 			};
 		}
 	</script>
+
+	<script>
+		simulations = 1000000;
+
+		var blob = new Blob([
+			document.querySelector('#worker').textContent
+		], { type: "text/javascript" })
+
+		var worker;
+
+		function simulate() {
+			var primogems = Number(document.getElementById("primogems").value);
+			var fates = Number(document.getElementById("fates").value);
+			var pityCounter = Number(document.getElementById("pity").value);
+			if (isNaN(primogems) || isNaN(fates) || isNaN(pityCounter)) {
+				document.getElementById("progress").innerHTML = "<p style='color:red'>Invalid inputs</p>";
+				return;
+			}
+
+			if (worker) {
+				worker.terminate();
+			}
+			worker = new Worker(window.URL.createObjectURL(blob));
+			worker.onmessage = update;
+
+			var guaranteedRateUp = document.getElementById("guaranteed").checked
+			var rolls = primogems / 160 + fates;
+			worker.postMessage({
+				rolls: rolls,
+				pityCounter: pityCounter,
+				guaranteedRateUp: guaranteedRateUp,
+				simulations: simulations
+			});
+		}
+
+		function update(e) {
+			if (typeof e.data.progress !== 'undefined') {
+				document.getElementById("progress").innerHTML = "Running simulations. Total progress: " + (e.data.progress * 100 / simulations).toFixed(0) + "%";
+				return;
+			}
+			document.getElementById("progress").innerHTML = "Simulation complete";
+
+			var c = e.data.c;
+			document.getElementById("total").innerHTML = ((e.data.rateUps + e.data.others) / simulations).toFixed(2);
+			document.getElementById("rateUp").innerHTML = (e.data.rateUps / simulations).toFixed(2);
+
+			document.getElementById("c0").innerHTML = ((c[0] + c[1] + c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(2) + "%";
+			document.getElementById("c1").innerHTML = ((c[1] + c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(2) + "%";
+			document.getElementById("c2").innerHTML = ((c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(2) + "%";
+			document.getElementById("c3").innerHTML = ((c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(2) + "%";
+			document.getElementById("c4").innerHTML = ((c[4] + c[5] + c[6]) / simulations * 100).toFixed(2) + "%";
+			document.getElementById("c5").innerHTML = ((c[5] + c[6])/ simulations * 100).toFixed(2) + "%";
+			document.getElementById("c6").innerHTML = (c[6] / simulations * 100).toFixed(2) + "%";
+		}
+	</script>
 </head>
 
 <body class="bg-light">
@@ -75,13 +117,14 @@
 		<input type="text" class="form-control w-25" id="primogems" value="0">
 		<label for="fates" class="form-label mt-4">Amount of fates</label>
 		<input type="text" class="form-control w-25" id="fates" value="0">
-		<label for="pity" class="form-label mt-4">Pity counter (how many rolls did you make since your last 5*)</label>
+		<label for="pity" class="form-label mt-4">Pity counter (amount of rolls you made since your last 5*)</label>
 		<input type="text" class="form-control w-25" id="pity" value="0">
 		<div class="form-check mt-4">
 			<input type="checkbox" class="form-check-input" id="guaranteed">
 			<label class="form-check-label" for="guaranteed">My next 5* is guaranteed to be a rate up characater</label>
 		</div>
 		<button type="button" class="btn btn-primary mt-4" onclick="simulate()">Simulate</button>
+		<div id="progress" class="mt-4">This page will run 1,000,000 simulations</div>
 	</div>
 	<div class="col-md-6 mt-4">
 		<table class="table">
@@ -97,36 +140,36 @@
 				<td id="total"></td>
 			</tr>
 			<tr>
-				<th scope="row">Average number of Albedo pulls</th>
+				<th scope="row">Average number of rate-up 5* characters</th>
 				<td id="rateUp"></td>
 			</tr>
 			<tr>
-				<th scope="row">Chance of getting C0 Albedo</th>
+				<th scope="row">Chance of getting C0 rate-up character</th>
 				<td id="c0"></td>
 			</tr>
 			<tr>
-				<th scope="row">Chance of getting C1 Albedo</th>
+				<th scope="row">Chance of getting C1 rate-up character</th>
 				<td id="c1"></td>
 			</tr>
 			<tr>
-				<th scope="row">Chance of getting C2 Albedo</th>
+				<th scope="row">Chance of getting C2 rate-up character</th>
 				<td id="c2"></td>
 			</tr>
 			<tr>
-				<th scope="row">Chance of getting C3 Albedo</th>
+				<th scope="row">Chance of getting C3 rate-up character</th>
 				<td id="c3"></td>
 				<td id="c3c"></td>
 			</tr>
 			<tr>
-				<th scope="row">Chance of getting C4 Albedo</th>
+				<th scope="row">Chance of getting C4 rate-up character</th>
 				<td id="c4"></td>
 			</tr>
 			<tr>
-				<th scope="row">Chance of getting C5 Albedo</th>
+				<th scope="row">Chance of getting C5 rate-up character</th>
 				<td id="c5"></td>
 			</tr>
 			<tr>
-				<th scope="row">Chance of getting C6 Albedo</th>
+				<th scope="row">Chance of getting C6 rate-up character</th>
 				<td id="c6"></td>
 			</tr>
 			</tbody>
