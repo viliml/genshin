@@ -17,7 +17,7 @@
 				if (roll.rateUps > 0) {
 					c[Math.min(roll.rateUps - 1, 6)] += 1;
 				}
-				if (i % (e.data.simulations / 100) == 0) {
+				if (i % (e.data.simulations / 50) == 0) {
 					postMessage({
 						progress: i
 					});
@@ -35,8 +35,8 @@
 			var others = 0;
 			for (var i = 0; i < rolls; i++) {
 				pityCounter++;
-				var chance = pityCounter < 76 ? 0.006 : 0.324;
-				if (Math.random() < chance || pityCounter > 89) {
+				var rolled = chance(pityCounter);
+				if (Math.random() < rolled) {
 					pityCounter = 0;
 					if (guaranteedRateUp || Math.random() < 0.5) {
 						rateUps++;
@@ -51,6 +51,26 @@
 				rateUps: rateUps,
 				others: others
 			};
+		}
+
+		// aproximation based on distribution from https://paimon.moe/wish/tally/
+		function chance(pityCounter) {
+			if (pityCounter < 74) {
+				return 0.006;
+			} else if (pityCounter == 90) {
+				return 1.01;
+			}
+			switch (pityCounter) {
+				case 74: return 0.06;
+				case 75: return 0.12;
+				case 76: return 0.18;
+				case 77: return 0.24;
+				case 78: return 0.3;
+				case 79: return 0.3;
+				case 80: return 0.4;
+				case 81: return 0.4;
+				default: return 0.5;
+			}
 		}
 	</script>
 
@@ -96,16 +116,16 @@
 			document.getElementById("progress").innerHTML = "Simulation complete";
 
 			var c = e.data.c;
-			document.getElementById("total").innerHTML = ((e.data.rateUps + e.data.others) / simulations).toFixed(2);
-			document.getElementById("rateUp").innerHTML = (e.data.rateUps / simulations).toFixed(2);
+			document.getElementById("total").innerHTML = ((e.data.rateUps + e.data.others) / simulations).toFixed(1);
+			document.getElementById("rateUp").innerHTML = (e.data.rateUps / simulations).toFixed(1);
 
-			document.getElementById("c0").innerHTML = ((c[0] + c[1] + c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(2) + "%";
-			document.getElementById("c1").innerHTML = ((c[1] + c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(2) + "%";
-			document.getElementById("c2").innerHTML = ((c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(2) + "%";
-			document.getElementById("c3").innerHTML = ((c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(2) + "%";
-			document.getElementById("c4").innerHTML = ((c[4] + c[5] + c[6]) / simulations * 100).toFixed(2) + "%";
-			document.getElementById("c5").innerHTML = ((c[5] + c[6])/ simulations * 100).toFixed(2) + "%";
-			document.getElementById("c6").innerHTML = (c[6] / simulations * 100).toFixed(2) + "%";
+			document.getElementById("c0").innerHTML = ((c[0] + c[1] + c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(1) + "%";
+			document.getElementById("c1").innerHTML = ((c[1] + c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(1) + "%";
+			document.getElementById("c2").innerHTML = ((c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(1) + "%";
+			document.getElementById("c3").innerHTML = ((c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(1) + "%";
+			document.getElementById("c4").innerHTML = ((c[4] + c[5] + c[6]) / simulations * 100).toFixed(1) + "%";
+			document.getElementById("c5").innerHTML = ((c[5] + c[6])/ simulations * 100).toFixed(1) + "%";
+			document.getElementById("c6").innerHTML = (c[6] / simulations * 100).toFixed(1) + "%";
 		}
 	</script>
 </head>
