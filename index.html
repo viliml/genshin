@@ -116,8 +116,8 @@
 			document.getElementById("progress").innerHTML = "Simulation complete";
 
 			var c = e.data.c;
-			document.getElementById("total").innerHTML = ((e.data.rateUps + e.data.others) / simulations).toFixed(1);
-			document.getElementById("rateUp").innerHTML = (e.data.rateUps / simulations).toFixed(1);
+			document.getElementById("total").innerHTML = ((e.data.rateUps + e.data.others) / simulations).toFixed(2);
+			document.getElementById("rateUp").innerHTML = (e.data.rateUps / simulations).toFixed(2);
 
 			document.getElementById("c0").innerHTML = ((c[0] + c[1] + c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(1) + "%";
 			document.getElementById("c1").innerHTML = ((c[1] + c[2] + c[3] + c[4] + c[5] + c[6]) / simulations * 100).toFixed(1) + "%";
