@@ -55,10 +55,6 @@
 				var diceRoll = Math.random();
 				if (diceRoll < chance5(pityCounter5)) {
 					pityCounter5 = 0;
-					if (pityCounter4 == 10) {
-						// rolling 5* when you have 4* hard pity resets 4* pity
-						pityCounter4 = 0;
-					}
 					if (guaranteedRateUp5 || Math.random() < 0.5) {
 						rateUps5++;
 						guaranteedRateUp5 = false;
@@ -85,31 +81,20 @@
 			};
 		}
 
-		// aproximation based on distribution from https://paimon.moe/wish/tally/
 		function chance5(pityCounter) {
 			if (pityCounter < 74) {
 				return 0.006;
-			} else if (pityCounter == 90) {
-				return 1.01;
+			} else {
+				return 0.006 + (pityCounter - 73) * 0.06;
 			}
-			switch (pityCounter) {
-				case 74: return 0.06;
-				case 75: return 0.12;
-				case 76: return 0.18;
-				case 77: return 0.24;
-				case 78: return 0.3;
-				case 79: return 0.3;
-				case 80: return 0.4;
-				case 81: return 0.4;
-				default: return 0.5;
-			}
+			
 		}
 
 		function chance4(pityCounter) {
 			if (pityCounter <= 8) {
 				return 0.051;
 			} else if (pityCounter == 9) {
-				return 0.5;
+				return 0.561;
 			}
 			return 1.01;
 		}
