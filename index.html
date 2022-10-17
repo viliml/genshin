@@ -12,18 +12,18 @@
 			var rateUps4 = 0;
 			var others5 = 0;
 			var atLeastOne5 = 0;
-			var c4 = [0, 0, 0, 0, 0, 0, 0];
-			var c5 = [0, 0, 0, 0, 0, 0, 0];
+			var c4 = [0, 0, 0, 0, 0];
+			var c5 = [0, 0, 0, 0, 0];
 			for (var i = 0; i < e.data.simulations; i++) {
-				var roll = simulateOne(e.data.rolls, e.data.pityCounter4, e.data.pityCounter5, e.data.guaranteedRateUp4, e.data.guaranteedRateUp5);
+				var roll = simulateOne(e.data.rolls, e.data.pityCounter4, e.data.pityCounter5, e.data.guaranteedRateUp4, e.data.guaranteedRateUp5, e.data.pathPoints);
 				rateUps5 += roll.rateUps5;
 				rateUps4 += roll.rateUps4;
 				others5 += roll.others5;
 				if (roll.rateUps5 > 0) {
-					c5[Math.min(roll.rateUps5 - 1, 6)] += 1;
+					c5[Math.min(roll.rateUps5 - 1, 4)] += 1;
 				}
 				if (roll.rateUps4 > 0) {
-					c4[Math.min(roll.rateUps4 - 1, 6)] += 1;
+					c4[Math.min(roll.rateUps4 - 1, 4)] += 1;
 				}
 				if (roll.rateUps5 + roll.others5 > 0) {
 					atLeastOne5++;
@@ -44,7 +44,7 @@
 			});
 		};
 
-		function simulateOne(rolls, pityCounter4, pityCounter5, guaranteedRateUp4, guaranteedRateUp5) {
+		function simulateOne(rolls, pityCounter4, pityCounter5, guaranteedRateUp4, guaranteedRateUp5, pathPoints) {
 			var rateUps5 = 0;
 			var rateUps4 = 0;
 			var others5 = 0;
@@ -55,17 +55,24 @@
 				var diceRoll = Math.random();
 				if (diceRoll < chance5(pityCounter5)) {
 					pityCounter5 = 0;
-					if (guaranteedRateUp5 || Math.random() < 0.5) {
-						rateUps5++;
+					if (guaranteedRateUp5 || pathPoints == 2 || Math.random() < 0.75) {
 						guaranteedRateUp5 = false;
+						if (pathPoints == 2 || Math.random() < 0.5) {
+							pathPoints = 0;
+							rateUps5++;
+						} else {
+							others5++;
+							pathPoints++;
+						}
 					} else {
 						others5++;
 						guaranteedRateUp5 = true;
+						pathPoints++;
 					}
 				} else if (diceRoll < chance5(pityCounter5) + chance4(pityCounter4)) {
 					pityCounter4 = 0;
-					if (guaranteedRateUp4 || Math.random() < 0.5) {
-						if (Math.random() < 1/3) {
+					if (guaranteedRateUp4 || Math.random() < 0.75) {
+						if (Math.random() < 1/5) {
 							rateUps4++;
 						}
 						guaranteedRateUp4 = false;
@@ -82,19 +89,23 @@
 		}
 
 		function chance5(pityCounter) {
-			if (pityCounter < 74) {
-				return 0.006;
-			} else {
-				return 0.006 + (pityCounter - 73) * 0.06;
+			if (pityCounter < 63) {
+				return 0.007;
+			} else if (pityCounter < 75) {
+				return 0.007 + (pityCounter - 62) * 0.07;
+			} else if (pityCounter < 80) {
+				return 0.2;
 			}
-			
+			return 1.01;
 		}
 
 		function chance4(pityCounter) {
-			if (pityCounter <= 8) {
-				return 0.051;
+			if (pityCounter <= 7) {
+				return 0.06;
+			} else if (pityCounter == 8) {
+				return 0.662;
 			} else if (pityCounter == 9) {
-				return 0.561;
+				return 0.989;
 			}
 			return 1.01;
 		}
@@ -114,7 +125,8 @@
 			var fates = Number(document.getElementById("fates").value);
 			var pityCounter5 = Number(document.getElementById("pity5").value);
 			var pityCounter4 = Number(document.getElementById("pity4").value);
-			if (isNaN(primogems) || isNaN(fates) || isNaN(pityCounter5) || isNaN(pityCounter4)) {
+			var pathPoints = Number(document.getElementById("pathPoints").value);
+			if (isNaN(primogems) || isNaN(fates) || isNaN(pityCounter5) || isNaN(pityCounter4) || isNaN(pathPoints)) {
 				document.getElementById("progress4").innerHTML = "<p style='color:red'>Invalid inputs</p>";
 				document.getElementById("progress5").innerHTML = "<p style='color:red'>Invalid inputs</p>";
 				return;
@@ -137,6 +149,7 @@
 				pityCounter5: pityCounter5,
 				guaranteedRateUp4: guaranteedRateUp4,
 				guaranteedRateUp5: guaranteedRateUp5,
+				pathPoints: pathPoints,
 				simulations: simulations
 			});
 		}
@@ -153,24 +166,20 @@
 			var c5 = e.data.c5;
 			document.getElementById("total5").innerHTML = ((e.data.rateUps5 + e.data.others5) / simulations).toFixed(2);
 			document.getElementById("rateUp5").innerHTML = (e.data.rateUps5 / simulations).toFixed(2);
-			document.getElementById("c05").innerHTML = ((c5[0] + c5[1] + c5[2] + c5[3] + c5[4] + c5[5] + c5[6]) / simulations * 100).toFixed(1) + "%";
-			document.getElementById("c15").innerHTML = ((c5[1] + c5[2] + c5[3] + c5[4] + c5[5] + c5[6]) / simulations * 100).toFixed(1) + "%";
-			document.getElementById("c25").innerHTML = ((c5[2] + c5[3] + c5[4] + c5[5] + c5[6]) / simulations * 100).toFixed(1) + "%";
-			document.getElementById("c35").innerHTML = ((c5[3] + c5[4] + c5[5] + c5[6]) / simulations * 100).toFixed(1) + "%";
-			document.getElementById("c45").innerHTML = ((c5[4] + c5[5] + c5[6]) / simulations * 100).toFixed(1) + "%";
-			document.getElementById("c55").innerHTML = ((c5[5] + c5[6])/ simulations * 100).toFixed(1) + "%";
-			document.getElementById("c65").innerHTML = (c5[6] / simulations * 100).toFixed(1) + "%";
+			document.getElementById("r15").innerHTML = ((c5[0] + c5[1] + c5[2] + c5[3] + c5[4]) / simulations * 100).toFixed(1) + "%";
+			document.getElementById("r25").innerHTML = ((c5[1] + c5[2] + c5[3] + c5[4]) / simulations * 100).toFixed(1) + "%";
+			document.getElementById("r35").innerHTML = ((c5[2] + c5[3] + c5[4]) / simulations * 100).toFixed(1) + "%";
+			document.getElementById("r45").innerHTML = ((c5[3] + c5[4]) / simulations * 100).toFixed(1) + "%";
+			document.getElementById("r55").innerHTML = ((c5[4]) / simulations * 100).toFixed(1) + "%";
 			
 			var c4 = e.data.c4;
 			console.log(e.data);
 			document.getElementById("any5").innerHTML = (e.data.atLeastOne5 / simulations * 100).toFixed(1) + "%";
-			document.getElementById("c04").innerHTML = ((c4[0] + c4[1] + c4[2] + c4[3] + c4[4] + c4[5] + c4[6]) / simulations * 100).toFixed(1) + "%";
-			document.getElementById("c14").innerHTML = ((c4[1] + c4[2] + c4[3] + c4[4] + c4[5] + c4[6]) / simulations * 100).toFixed(1) + "%";
-			document.getElementById("c24").innerHTML = ((c4[2] + c4[3] + c4[4] + c4[5] + c4[6]) / simulations * 100).toFixed(1) + "%";
-			document.getElementById("c34").innerHTML = ((c4[3] + c4[4] + c4[5] + c4[6]) / simulations * 100).toFixed(1) + "%";
-			document.getElementById("c44").innerHTML = ((c4[4] + c4[5] + c4[6]) / simulations * 100).toFixed(1) + "%";
-			document.getElementById("c54").innerHTML = ((c4[5] + c4[6])/ simulations * 100).toFixed(1) + "%";
-			document.getElementById("c64").innerHTML = (c4[6] / simulations * 100).toFixed(1) + "%";
+			document.getElementById("r14").innerHTML = ((c4[0] + c4[1] + c4[2] + c4[3] + c4[4]) / simulations * 100).toFixed(1) + "%";
+			document.getElementById("r24").innerHTML = ((c4[1] + c4[2] + c4[3] + c4[4]) / simulations * 100).toFixed(1) + "%";
+			document.getElementById("r34").innerHTML = ((c4[2] + c4[3] + c4[4]) / simulations * 100).toFixed(1) + "%";
+			document.getElementById("r44").innerHTML = ((c4[3] + c4[4]) / simulations * 100).toFixed(1) + "%";
+			document.getElementById("r54").innerHTML = ((c4[4]) / simulations * 100).toFixed(1) + "%";
 		}
 	</script>
 </head>
@@ -198,8 +207,10 @@
 	<div class="col-md-4">
 		<div class="form-check mt-2">
 			<input type="checkbox" class="form-check-input" id="guaranteed5">
-			<label class="form-check-label" for="guaranteed5">My next 5* is guaranteed to be a featured characater</label>
+			<label class="form-check-label" for="guaranteed5">My next 5* is guaranteed to be a featured weapon</label>
 		</div>
+		<label for="pathPoints" class="form-label mt-2">Epitomized path fate points</label>
+		<input type="text" class="form-control w-25" id="pathPoints" value="0">
 		<button type="button" class="btn btn-primary mt-2" onclick="simulate()">Simulate</button>
 		<div id="progress5" class="mt-2">This page will run 1,000,000 simulations</div>
 	</div>
@@ -207,13 +218,13 @@
 		<table class="table">
 			<thead>
 			<tr>
-				<th scope="col">Average number of 5* characters</th>
+				<th scope="col">Average number of 5* weapons</th>
 				<th scope="col">Value</th>
 			</tr>
 			</thead>
 			<tbody>
 			<tr>
-				<th scope="row">Featured 5*</th>
+				<th scope="row">Specific featured 5*</th>
 				<td id="rateUp5"></td>
 			</tr>
 			<tr>
@@ -227,38 +238,30 @@
 		<table class="table">
 			<thead>
 			<tr>
-				<th scope="col">Chance of getting a featured 5* character</th>
+				<th scope="col">Chance of getting a specific featured 5* weapon</th>
 				<th scope="col">Value</th>
 			</tr>
 			</thead>
 			<tbody>
 			<tr>
-				<th scope="row">C0+</th>
-				<td id="c05"></td>
+				<th scope="row">R1+</th>
+				<td id="r15"></td>
 			</tr>
 			<tr>
-				<th scope="row">C1+</th>
-				<td id="c15"></td>
+				<th scope="row">R2+</th>
+				<td id="r25"></td>
 			</tr>
 			<tr>
-				<th scope="row">C2+</th>
-				<td id="c25"></td>
+				<th scope="row">R3+</th>
+				<td id="r35"></td>
 			</tr>
 			<tr>
-				<th scope="row">C3+</th>
-				<td id="c35"></td>
+				<th scope="row">R4+</th>
+				<td id="r45"></td>
 			</tr>
 			<tr>
-				<th scope="row">C4+</th>
-				<td id="c45"></td>
-			</tr>
-			<tr>
-				<th scope="row">C5+</th>
-				<td id="c55"></td>
-			</tr>
-			<tr>
-				<th scope="row">C6</th>
-				<td id="c65"></td>
+				<th scope="row">R5</th>
+				<td id="r55"></td>
 			</tr>
 			</tbody>
 		</table>
@@ -270,7 +273,7 @@
 		<input type="text" class="form-control w-25" id="pity4" value="0">
 		<div class="form-check mt-2">
 			<input type="checkbox" class="form-check-input" id="guaranteed4">
-			<label class="form-check-label" for="guaranteed4">My next 4* is guaranteed to be a featured characater</label>
+			<label class="form-check-label" for="guaranteed4">My next 4* is guaranteed to be a featured weapon</label>
 		</div>
 		<button type="button" class="btn btn-primary mt-2" onclick="simulate()">Simulate</button>
 		<div id="progress4" class="mt-2">This page will run 1,000,000 simulations</div>
@@ -279,7 +282,7 @@
 		<table class="table">
 			<thead>
 			<tr>
-				<th scope="col">Chance of getting 5* character</th>
+				<th scope="col">Chance of getting a 5* weapon</th>
 				<th scope="col">Value</th>
 			</tr>
 			</thead>
@@ -295,38 +298,30 @@
 		<table class="table">
 			<thead>
 			<tr>
-				<th scope="col">Chance of getting a specific featured 4* character</th>
+				<th scope="col">Chance of getting a specific featured 4* weapon</th>
 				<th scope="col">Value</th>
 			</tr>
 			</thead>
 			<tbody>
 			<tr>
-				<th scope="row">C0+</th>
-				<td id="c04"></td>
+				<th scope="row">R1+</th>
+				<td id="r14"></td>
 			</tr>
 			<tr>
-				<th scope="row">C1+</th>
-				<td id="c14"></td>
+				<th scope="row">R2+</th>
+				<td id="r24"></td>
 			</tr>
 			<tr>
-				<th scope="row">C2+</th>
-				<td id="c24"></td>
+				<th scope="row">R3+</th>
+				<td id="r34"></td>
 			</tr>
 			<tr>
-				<th scope="row">C3+</th>
-				<td id="c34"></td>
+				<th scope="row">R4+</th>
+				<td id="r44"></td>
 			</tr>
 			<tr>
-				<th scope="row">C4+</th>
-				<td id="c44"></td>
-			</tr>
-			<tr>
-				<th scope="row">C5+</th>
-				<td id="c54"></td>
-			</tr>
-			<tr>
-				<th scope="row">C6</th>
-				<td id="c64"></td>
+				<th scope="row">R5</th>
+				<td id="r54"></td>
 			</tr>
 			</tbody>
 		</table>
